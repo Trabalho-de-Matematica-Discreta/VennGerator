@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <title>Venn Sets — Projeto</title>
+  <link rel="stylesheet" href="./resert.css">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='resert.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+  <div class="card">
+    <h2>Calculadora de Conjuntos (Venn)</h2>
+
+    <div>
+      <label for="A">Conjunto A (ex: 1,2,3):</label>
+      <input id="A" type="text" value="1,2,3,4">
+
+      <label for="B">Conjunto B (ex: 3,4,5):</label>
+      <input id="B" type="text" value="3,4,5,6">
+
+      <div>
+        <button onclick="calcular('uniao')">União</button>
+        <button onclick="calcular('intersecao')">Interseção</button>
+        <button onclick="calcular('diferenca')">Diferença (A - B)</button>
+      </div>
+    </div>
+
+    <h3>Resultado (elementos):</h3>
+    <pre id="saida">-</pre>
+
+  <h3>Diagrama de Venn:</h3>
+<img id="venn" src="" alt="Diagrama de Venn" />
+<br>
+<button id="baixar" style="display:none;">Baixar Diagrama</button>
+
+  </div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
