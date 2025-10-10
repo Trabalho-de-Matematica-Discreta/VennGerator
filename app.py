@@ -7,7 +7,7 @@ import matplotlib.patches as mpatches
 from matplotlib.patches import Circle, Wedge
 import numpy as np
 
-app = Flask(__name__, template_folder='.')
+app = Flask(__name__, template_folder='templates/')
 CORS(app)
 
 
