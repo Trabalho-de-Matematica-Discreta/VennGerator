@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from matplotlib_venn import venn2
 import io, base64
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
+
 
 @app.route('/')
 def index():
@@ -37,20 +38,6 @@ def operacao():
     if v.get_label_by_id('11'):
         v.get_label_by_id('11').set_text(','.join(map(str, A & B)))
 
-    if op == 'uniao':
-        for pid in ('10', '01', '11'):
-            if v.get_patch_by_id(pid):
-                v.get_patch_by_id(pid).set_color('#87CEEB')
-                v.get_patch_by_id(pid).set_alpha(0.6)
-    elif op == 'intersecao':
-        if v.get_patch_by_id('11'):
-            v.get_patch_by_id('11').set_color('#FFA500')
-            v.get_patch_by_id('11').set_alpha(0.8)
-    elif op == 'diferenca':
-        if v.get_patch_by_id('10'):
-            v.get_patch_by_id('10').set_color('#90EE90')
-            v.get_patch_by_id('10').set_alpha(0.8)
-
     plt.tight_layout()
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight')
@@ -61,4 +48,4 @@ def operacao():
     return jsonify({'resultado': resultado, 'imagem': img_b64})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=10000)
