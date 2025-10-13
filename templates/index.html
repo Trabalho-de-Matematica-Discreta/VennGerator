@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VennGenerator - Calculadora de Conjuntos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Poppins", sans-serif;
+            background: linear-gradient(135deg, #D16BA5, #86A8E7, #5FFBF1);
+            color: #2d2d2d;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Canvas de fundo neural */
+        #neural-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .neural-particles {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(15px);
+            border-radius: 24px;
+            padding: 2.5rem;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            position: relative;
+            z-index: 1;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #D16BA5, #86A8E7, #5FFBF1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .set-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #7B68EE;
+            font-size: 0.95rem;
+        }
+
+        input[type="text"] {
+            padding: 0.8rem;
+            border: 2px solid #E0E7FF;
+            border-radius: 12px;
+            background: #F9FAFB;
+            color: #333;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: #86A8E7;
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(134, 168, 231, 0.1);
+        }
+
+        input[type="text"]::placeholder {
+            color: #999;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: #555;
+            margin: 0;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #86A8E7;
+        }
+
+        .operations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .operation-btn {
+            background: #F3F4F6;
+            border: 2px solid #E5E7EB;
+            padding: 12px 20px;
+            border-radius: 12px;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .operation-btn:hover {
+            border-color: #B19CD9;
+            background: #FAF5FF;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(177, 156, 217, 0.3);
+        }
+
+        .operation-btn.active {
+            background: linear-gradient(135deg, #4D9DE0, #7B68EE);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 5px 15px rgba(77, 157, 224, 0.4);
+        }
+
+        .calc-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #D16BA5, #86A8E7);
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(209, 107, 165, 0.3);
+        }
+
+        .calc-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(209, 107, 165, 0.5);
+        }
+
+        .calc-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 1rem 0;
+            color: #7B68EE;
+            font-weight: 600;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .error {
+            color: #E74C3C;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+            padding: 1rem;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 12px;
+            margin: 1rem 0;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+        }
+
+        .result {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #E0E7FF;
+            display: none;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .result h3 {
+            color: #7B68EE;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        #resultContent {
+            background: #FAF5FF;
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+            word-wrap: break-word;
+            border: 2px solid #E0D4F7;
+            color: #333;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        #resultContent::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #resultContent::-webkit-scrollbar-track {
+            background: #F3F4F6;
+            border-radius: 10px;
+        }
+        
+        #resultContent::-webkit-scrollbar-thumb {
+            background: #B19CD9;
+            border-radius: 10px;
+        }
+
+        .card-info {
+            color: #86A8E7;
+            font-weight: 600;
+            margin: 1rem 0;
+            font-size: 1.1rem;
+        }
+
+        #venn {
+            display: block;
+            margin: 1.5rem auto;
+            max-width: 100%;
+            height: auto;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            border: 2px solid #E0E7FF;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="neural-canvas"></canvas>
+
+    <div class="container">
+        <header>
+            <h1>🔵 VennGenerator</h1>
+            <p>Calculadora de Conjuntos com Diagrama de Venn Interativo</p>
+        </header>
+
+        <div class="input-grid">
+            <div class="set-input">
+                <label for="setA">Conjunto A:</label>
+                <input type="text" id="setA" placeholder="Ex: 1, 2, 3, 4 ou A, B, C.">
+            </div>
+
+            <div class="set-input">
+                <label for="setB">Conjunto B:</label>
+                <input type="text" id="setB" placeholder="Ex: 3, 4, 5, 6 ou A, B, C.">
+            </div>
+        </div>
+
+       <div class="checkbox-group">
+            <label>
+                <input type="checkbox" id="sortResults">
+                <span>Ordenar resultados</span>
+            </label>
+        </div>
+
+        <div class="operations">
+            <button class="operation-btn" data-op="uniao" onclick="selectOperation('uniao')">
+                <span>União (∪)</span>
+            </button>
+            <button class="operation-btn" data-op="intersecao" onclick="selectOperation('intersecao')">
+                <span>Interseção (∩)</span>
+            </button>
+            <button class="operation-btn" data-op="diferenca" onclick="selectOperation('diferenca')">
+                <span>A - B</span>
+            </button>
+            <button class="operation-btn" data-op="diferenca_b" onclick="selectOperation('diferenca_b')">
+                <span>B - A</span>
+            </button>
+            <button class="operation-btn" data-op="simetrica" onclick="selectOperation('simetrica')">
+                <span>Dif. Simétrica (△)</span>
+            </button>
+            <button class="operation-btn" data-op="cartesiano" onclick="selectOperation('cartesiano')">
+                <span>Produto Cartesiano (×)</span>
+            </button>
+        </div>
+
+        <button class="calc-btn" onclick="calcular()">Calcular Operação</button>
+
+        <div class="loading" id="loading">⏳ Calculando e gerando diagrama...</div>
+        <div class="error" id="errorMessage"></div>
+
+        <div class="result" id="resultsSection">
+            <h3>Resultado:</h3>
+            <div id="resultContent">∅</div>
+            <p class="card-info">Cardinalidade: <span id="cardinalidade">0</span></p>
+            <img id="venn" src="" alt="Diagrama de Venn">
+        </div>
+    </div>
+
+    <script>
+        // ======== ANIMAÇÃO NEURAL DE FUNDO ========
+        const canvas = document.getElementById('neural-canvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let nodes = [];
+        let particles = [];
+
+        // Criar nós fixos em posições estratégicas
+        function createNodes() {
+            const cols = 6;
+            const rows = 4;
+            nodes = [];
+            
+            for (let i = 0; i < cols; i++) {
+                for (let j = 0; j < rows; j++) {
+                    nodes.push({
+                        x: (canvas.width / (cols + 1)) * (i + 1),
+                        y: (canvas.height / (rows + 1)) * (j + 1)
+                    });
+                }
+            }
+        }
+
+        class ConnectionParticle {
+            constructor(startNode, endNode) {
+                this.start = startNode;
+                this.end = endNode;
+                this.progress = Math.random();
+                this.speed = 0.003 + Math.random() * 0.007;
+                this.size = 1.5 + Math.random() * 1.5;
+            }
+
+            update() {
+                this.progress += this.speed;
+                if (this.progress >= 1) this.progress = 0;
+            }
+
+            draw() {
+                const x = this.start.x + (this.end.x - this.start.x) * this.progress;
+                const y = this.start.y + (this.end.y - this.start.y) * this.progress;
+
+                ctx.beginPath();
+                ctx.arc(x, y, this.size, 0, Math.PI * 2);
+
+                const glow = ctx.createRadialGradient(x, y, 0, x, y, this.size * 3);
+                glow.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+                ctx.fillStyle = glow;
+                ctx.fill();
+            }
+        }
+
+        function generateParticles() {
+            particles = [];
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                    if (dist < 300) {
+                        particles.push(new ConnectionParticle(nodes[i], nodes[j]));
+                    }
+                }
+            }
+        }
+
+        function renderConnections() {
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const dist = Math.hypot(nodes[i].x - nodes[j].x, nodes[i].y - nodes[j].y);
+                    if (dist < 300) {
+                        const alpha = Math.max(0, 1 - dist / 300) * 0.15;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(nodes[i].x, nodes[i].y);
+                        ctx.lineTo(nodes[j].x, nodes[j].y);
+                        ctx.strokeStyle = `rgba(255, 255, 255, ${alpha})`;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function renderNodes() {
+            nodes.forEach(node => {
+                const time = Date.now() * 0.001;
+                const pulse = Math.sin(time + node.x * 0.01) * 0.3 + 0.7;
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 6 * pulse, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        function animateNetwork() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            renderConnections();
+
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            renderNodes();
+            requestAnimationFrame(animateNetwork);
+        }
+
+        createNodes();
+        generateParticles();
+        animateNetwork();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createNodes();
+            generateParticles();
+        });
+
+        function createFloatingDots() {
+            const count = 15;
+            for (let i = 0; i < count; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'neural-particles';
+                dot.style.left = Math.random() * 100 + '%';
+                dot.style.top = Math.random() * 100 + '%';
+                dot.style.animationDelay = Math.random() * 3 + 's';
+                dot.style.animationDuration = (3 + Math.random() * 2) + 's';
+                document.body.appendChild(dot);
+            }
+        }
+
+        createFloatingDots();
+
+        // ======== LÓGICA DA CALCULADORA ========
+        let selectedOperation = null;
+
+        function parseSet(text) {
+            if (!text.trim()) return [];
+            const elements = text.split(',').map(s => s.trim()).filter(Boolean);
+            return elements.map(e => isNaN(e) ? e : Number(e));
+        }
+
+        function selectOperation(op) {
+            selectedOperation = op;
+            document.querySelectorAll('.operation-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-op="${op}"]`).classList.add('active');
+        }
+
+        function showError(msg) {
+            const err = document.getElementById('errorMessage');
+            err.textContent = '⚠️ ' + msg;
+            err.style.display = 'block';
+            setTimeout(() => {
+                err.style.display = 'none';
+            }, 5000);
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        async function calcular() {
+            if (!selectedOperation) {
+                showError('Por favor, selecione uma operação!');
+                return;
+            }
+            hideError();
+
+            const setA = parseSet(document.getElementById('setA').value);
+            const setB = parseSet(document.getElementById('setB').value);
+
+            if (setA.length === 0 || setB.length === 0) {
+                showError('Por favor, preencha os conjuntos A e B!');
+                return;
+            }
+
+            const sortResults = document.getElementById('sortResults').checked;
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+
+            try {
+                const response = await fetch('/operacao', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        A: setA, 
+                        B: setB,
+                        operacao: selectedOperation,
+                        sort: sortResults
+                    })
+                });
+
+                const data = await response.json();
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.erro) {
+                    showError(data.erro);
+                    return;
+                }
+
+                const resultText = data.resultado.length === 0 ? '∅' : `{ ${data.resultado.join(', ')} }`;
+                document.getElementById('resultContent').textContent = resultText;
+                document.getElementById('cardinalidade').textContent = data.cardinalidade;
+                document.getElementById('venn').src = data.imagem;
+                document.getElementById('resultsSection').style.display = 'block';
+
+            } catch (e) {
+                document.getElementById('loading').style.display = 'none';
+                showError('Erro ao conectar ao servidor. Verifique se o Flask está rodando!');
+                console.error(e);
+            }
+        }
+
+        // Permitir calcular ao pressionar Enter
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    calcular();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
