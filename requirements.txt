@@ -2,3 +2,4 @@ flask
 matplotlib
 matplotlib-venn
 gunicorn
+flask-cors
