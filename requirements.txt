@@ -1,4 +1,0 @@
-flask
-matplotlib
-matplotlib-venn
-gunicorn
